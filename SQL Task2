@@ -1,0 +1,37 @@
+SELECT
+date_
+, ROUND(SUM(kumulative_revenue) * 100 / SUM(kumulative_prediction), 2) AS kumulative_persent
+, SUM(kumulative_revenue) AS kumulative_revenue
+, SUM(kumulative_prediction) AS kumulative_prediction
+FROM (
+SELECT
+revenue_date AS date_
+, SUM(revenue) OVER( ORDER BY revenue_date) AS kumulative_revenue
+, 0 AS kumulative_prediction
+FROM(
+SELECT
+s.date AS revenue_date
+, SUM(pr.price) AS revenue
+FROM `DA.order` o
+JOIN `DA.product` pr
+ON o.item_id = pr.item_id
+JOIN `DA.session` s
+ON o.ga_session_id = s.ga_session_id
+GROUP BY s.date) AS data1
+
+
+UNION ALL
+
+
+SELECT
+date_prediction AS date_
+,0 AS kumulative_revenue
+, SUM(prediction) OVER(ORDER BY date_prediction) AS kumulative_prediction
+FROM (
+SELECT
+rp.date AS date_prediction
+, SUM(rp.predict) AS prediction
+FROM `DA.revenue_predict` rp
+GROUP BY rp.date
+))
+GROUP BY date_;
