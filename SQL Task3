@@ -1,0 +1,54 @@
+WITH
+
+data2 AS (
+SELECT
+date
+, SUM(sum_price) OVER(ORDER BY date) AS sum_revenue
+, 0 AS sum_predict
+FROM `Students.v_Artymovych_view_task`),
+
+
+data3 AS (
+SELECT
+rp.date AS date
+, SUM(rp.predict) AS sum_predict
+FROM `DA.revenue_predict` rp
+GROUP BY rp.date
+),
+
+
+data4 AS (
+SELECT
+ date
+ , 0 AS sum_revenue
+ , SUM(sum_predict) OVER(ORDER BY date) AS sum_predict
+FROM data3
+),
+
+data5 AS (
+SELECT *
+FROM data2
+UNION ALL
+SELECT *
+FROM data4
+)
+SELECT
+date
+, SUM(sum_revenue)  AS kumulative_revenue
+, SUM(sum_predict) AS kumulative_predict
+, SUM(sum_revenue)  * 100 / SUM(sum_predict)
+FROM data5
+GROUP BY date
+
+
+VIEW 
+CREATE VIEW Students.v_Artymovych_view_task AS
+SELECT
+s.date AS date
+, SUM(pr.price) AS sum_price
+FROM `DA.product`  pr
+JOIN `DA.order` o
+ON pr.item_id = o.item_id
+JOIN `DA.session` s
+ON o.ga_session_id = s.ga_session_id
+GROUP BY s.date
